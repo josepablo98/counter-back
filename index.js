@@ -1,17 +1,40 @@
-const express = require('express');
-const app = express();
-const server = require('http').createServer(app);
-const io = require('socket.io')(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  },
-  transports: ['polling']
-});
+import { useState, useEffect } from 'react';
+import socketIOClient, { Socket } from "socket.io-client";
 
-io.on('connection', (socket) => {
-  console.log('a user connected');
-});
+const ENDPOINT = "https://counter-back.vercel.app/";
 
-const port = process.env.PORT || 3000;
-server.listen(port, () => console.log(`Server running on port ${port}`));
+function CounterComponent() {
+  const [counter, setCounter] = useState(0);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  useEffect(() => {
+    const newSocket = socketIOClient(ENDPOINT, { transports: ['polling'] });
+    setSocket(newSocket);
+
+    newSocket.on('counter', (count) => {
+      setCounter(count);
+      setAnimationKey(prevKey => prevKey + 1); // Incrementa la clave para reiniciar la animación
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  const handleClick = () => {
+    if (socket) {
+      socket.emit('increment');
+    }
+  }
+
+  return (
+    <div className="contenedor">
+      <h4>Me entiendes, ¿no?</h4>
+      <button className="btn btn-primary" onClick={handleClick}>+1</button>
+      <h5 className={`counter animate__heartBeat ${animationKey}`} key={animationKey}>{counter}</h5>
+    </div>
+  )
+}
+
+export default CounterComponent;
