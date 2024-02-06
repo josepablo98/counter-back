@@ -12,7 +12,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: 'https://your-frontend-url',
+    origin: '*',
     methods: ['GET', 'POST']
   }
 });
